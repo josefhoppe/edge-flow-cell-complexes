@@ -1,0 +1,15 @@
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - snakemake-minimal >=7.3
+  - matplotlib
+  - pandas
+  - networkx
+  - numpy
+  - scikit-learn
+  - graphviz
+  - seaborn
+  - gdown
+  - openmatrix
+  - numba

@@ -1,0 +1,5 @@
+figures
+.snakemake
+**/__pycache__
+resources
+results

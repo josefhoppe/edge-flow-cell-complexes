@@ -1,0 +1,265 @@
+
+from helper import coinsizes
+
+rule all:
+    input:
+        "figures/time_exp.pdf",
+        "figures/inference_exp.pdf",
+        "figures/inference_exp_full.pdf",
+        "figures/approx_exp_error.pdf",
+        "figures/approx_exp_error_iter.pdf",
+        "figures/approx_exp_noise.pdf",
+        "figures/approx_exp_noise_iter.pdf",
+        "figures/realworld_exp_error.pdf",
+        "figures/realworld_exp_error_iter.pdf",
+        "figures/heuristic_exp.pdf",
+        expand("figures/realworld_tntp-{city}_exp_error{type}.pdf", city=["Anaheim", "Barcelona", "Berlin-Center", "Berlin-Mitte-Prenzlauerberg-Friedrichshain-Center", "Winnipeg"], type=['', '_iter'])
+    shell:
+        "echo 'ok'"
+
+rule time_exp:
+    output:
+        "results/runtime/{method}/{model}/{size}.csv"
+    script:
+        "scripts/time_complexity.py"
+
+rule time_exp_plot:
+    input:
+        expand("results/runtime/max/triangulation/{size}.csv", size=coinsizes(50,100000), method=['max', 'similarity']),
+        expand("results/runtime/max/smallworld/{size}.csv", size=coinsizes(50,10000), method=['max', 'similarity']),
+        expand("results/runtime/similarity/triangulation/{size}.csv", size=coinsizes(50,50000), method=['max', 'similarity']),
+        expand("results/runtime/similarity/smallworld/{size}.csv", size=coinsizes(50,5000), method=['max', 'similarity'])
+    output:
+        "figures/time_exp.pdf"
+    script:
+        "scripts/plot_time_compl.py"
+
+rule inference_exp_plot_full:
+    input:
+        expand("results/{exp_name}/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x11.csv", model=['triangulation'], size=[50], flows=[1,5,10,15,20], noise=[0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0], cell_len=[3,5,10],cells=[5], iterations=[5], cell_candidates=[10], exp_name=['opt-inference', 'inference'], method=['max', 'similarity']),
+        expand("results/{exp_name}/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x11.csv", model=['triangulation'], size=[50], flows=[1,5,10,15,20], noise=[0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0], cell_len=[3,5,10],cells=[5], iterations=[5], cell_candidates=[1], exp_name=['heuristic-only'], method=['max', 'similarity'])
+    params:
+        col='exp_name',
+        row='flows'
+    output:
+        "figures/inference_exp_full.pdf"
+    script:
+        "scripts/plot_inference.py"
+
+rule inference_exp_plot:
+    input:
+        expand("results/inference/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x11.csv", model=['triangulation'], size=[50], flows=[20], noise=[0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0], cell_len=[3,5,10],cells=[5], iterations=[5], cell_candidates=[10], method=['max', 'similarity']),
+    output:
+        "figures/inference_exp.pdf"
+    script:
+        "scripts/plot_inference.py"
+
+rule heuristic_exp_plot:
+    input:
+        expand("results/heuristic/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{cell_candidates}x{clusters}.csv", model=['triangulation'], size=[100], flows=[20], noise=[0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0], cell_len=[3,5,10],cells=[5], cell_candidates=[5], method=['max', 'similarity'], clusters=[11])
+    output:
+        "figures/heuristic_exp.pdf"
+    script:
+        "scripts/plot_heuristic.py"
+
+rule inference_experiment:
+    output:
+        "results/inference/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv"
+    params:
+        exp_name='inference'
+    script:
+        "scripts/inference_experiment.py"
+
+rule heuristic_only_experiment:
+    output:
+        "results/heuristic-only/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv"
+    params:
+        exp_name='heuristic_only'
+    script:
+        "scripts/inference_experiment.py"
+
+rule opt_inference_experiment:
+    output:
+        "results/opt-inference/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv"
+    params:
+        opt=True,
+        exp_name='opt_inference'
+    script:
+        "scripts/inference_experiment.py"
+
+rule approx_experiment:
+    output:
+        "results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv"
+    script:
+        "scripts/approx_experiment.py"
+
+rule heuristic_experiment:
+    output:
+        "results/heuristic/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{cell_candidates}x{clusters}.csv"
+    script:
+        "scripts/heuristic_experiment.py"
+
+approx_exp_params_no_noise = {
+'size':[50], 'flows':[20], 'cell_len':[10], 'cells':[10], 'iterations':[200], 'cell_candidates': [10], 'clusters': [21]
+}
+approx_exp_params = {
+'noise':[.75], **approx_exp_params_no_noise
+}
+
+rule plot_approx_exp_error_noise_iter:
+    input:
+        expand("results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity', 'ground_truth'], model=['triangulation'], noise=[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2], **approx_exp_params_no_noise)
+    params:
+        x_axis='noise',
+        x_label='edge noise ($\sigma_n$)',
+        sparsity=20,
+        sparsity_measure='iterations'
+        #max_entries=120
+    output:
+        "figures/approx_exp_noise_iter.pdf"
+    script:
+        "scripts/plot_approx_exp_error.py"
+
+rule plot_approx_exp_error_noise:
+    input:
+        expand("results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity'], model=['triangulation'], noise=[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2], **approx_exp_params_no_noise),
+        expand("results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv", method=['ground_truth'], model=['triangulation'], noise=[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1], **approx_exp_params_no_noise)
+    params:
+        x_axis='noise',
+        x_label='edge noise ($\sigma_n$)',
+        sparsity=200
+        #max_entries=120
+    output:
+        "figures/approx_exp_noise.pdf"
+    script:
+        "scripts/plot_approx_exp_error.py"
+
+rule plot_approx_exp_error:
+    input:
+        expand("results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'ground_truth', 'similarity'], model=['triangulation'], **approx_exp_params)
+    params:
+        x_axis='total_cell_len',
+        x_label='$||B_2||_0$'
+        #max_entries=120
+    output:
+        "figures/approx_exp_error.pdf"
+    script:
+        "scripts/plot_approx_exp_error.py"
+
+rule plot_approx_exp_error_iter:
+    input:
+        expand("results/approximation/{method}/{model}x{size}/{flows}x{noise}/{cell_len}x{cells}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'ground_truth', 'similarity'], model=['triangulation'], **approx_exp_params)
+    params:
+        x_axis='iterations',
+        x_label='scr-C_2'
+        #max_entries=120
+    output:
+        "figures/approx_exp_error_iter.pdf"
+    script:
+        "scripts/plot_approx_exp_error.py"
+
+rule get_taxi_dataset:
+    output:
+        "resources/taxi/Manhattan-taxi-trajectories.tar.gz"
+    shell:
+        "gdown 1o6bBC7m9IMYQ1OdCBWjLfMw6MXQPmv9J -O {output}"
+
+rule extract_taxi_dataset:
+    input: 
+        "resources/taxi/Manhattan-taxi-trajectories.tar.gz"
+    output:
+        expand("resources/taxi/{file}", file=['README.txt', 'neighborhoods.txt', 'medallions.txt', 'Manhattan-taxi-trajectories.txt'])
+    shell:
+        "tar -xzf {input} -C resources/taxi --strip-components 1"
+
+rule download_tntp_birmingham:
+    output:
+        "resources/tntp-Birmingham/trips.tntp"
+    shell:
+        "wget https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/Birmingham-England/Birmingham_Trips.tntp -O {output}"
+
+rule download_tntp_dataset:
+    output:
+        "resources/tntp-{city}/{type}.tntp"
+    run:
+        try:
+            shell("wget https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/{wildcards.city}/{wildcards.city}_{wildcards.type}.tntp -O {output}")
+        except:
+            shell("wget https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/{wildcards.city}/" + wildcards.city.lower() + "_{wildcards.type}.tntp -O {output}")
+
+rule process_tntp_data:
+    input:
+        "resources/tntp-{city}/trips.tntp"
+    output:
+        expand("resources/tntp-{{city}}/{file}", file=['graph.txt', 'flows.csv'])
+    script:
+        "scripts/process_tntp.py"
+
+rule process_taxi_data:
+    input:
+        "resources/taxi/Manhattan-taxi-trajectories.txt"
+    output:
+        expand("resources/taxi/{file}", file=['graph.txt', 'flows.csv'])
+    script:
+        "scripts/process_taxi.py"
+
+rule simulate_realworld:
+    output:
+        "results/realworld/{dataset}/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}.csv",
+        "results/realworld/{dataset}/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}_result.txt"
+    input:
+        expand("resources/{{dataset}}/{file}", file=['graph.txt', 'flows.csv'])
+    script:
+        "scripts/realworld_experiment.py"
+
+rule plot_realworld_exp_error:
+    input:
+        expand("results/realworld/{{dataset}}/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity'], flows=[1], iterations=[1000], cell_candidates=[1,5,20], clusters=[11])
+    params:
+        #x_axis='iterations',
+        x_axis='total_cell_len',
+        x_label='$||B_2||_0$',
+        alt_max_x=3000
+    output:
+        "figures/realworld_{dataset}_exp_error.pdf"
+    script:
+        "scripts/plot_realworld_exp_error.py"
+
+rule plot_realworld_exp_error_iter:
+    input:
+        expand("results/realworld/{{dataset}}/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity'], flows=[1], iterations=[1000], cell_candidates=[1,5,20], clusters=[11])
+    params:
+        x_axis='iterations',
+        #x_axis='total_cell_len',
+        #x_label='$||B_2||_0$',
+        #max_x=500
+    output:
+        "figures/realworld_{dataset}_exp_error_iter.pdf"
+    script:
+        "scripts/plot_realworld_exp_error.py"
+
+rule plot_realworld_taxi_exp_error:
+    input:
+        expand("results/realworld/taxi/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity'], flows=[10], iterations=[1000], cell_candidates=[1,5,20], clusters=[11])
+    params:
+        #x_axis='iterations',
+        x_axis='total_cell_len',
+        x_label='$||B_2||_0$',
+        max_x=300
+    output:
+        "figures/realworld_exp_error.pdf"
+    script:
+        "scripts/plot_realworld_exp_error.py"
+
+rule plot_realworld_taxi_exp_error_iter:
+    input:
+        expand("results/realworld/taxi/{method}/{flows}/{iterations}x{cell_candidates}x{clusters}.csv", method=['triangles', 'max', 'similarity'], flows=[10], iterations=[1000], cell_candidates=[1,5,20], clusters=[11])
+    params:
+        x_axis='iterations',
+        #x_axis='total_cell_len',
+        #x_label='$||B_2||_0$',
+        max_x=200
+    output:
+        "figures/realworld_exp_error_iter.pdf"
+    script:
+        "scripts/plot_realworld_exp_error.py"
