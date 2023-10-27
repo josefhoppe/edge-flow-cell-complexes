@@ -19,10 +19,10 @@ df_data = pd.concat([pd.read_csv(file) for file in snakemake.input])
 df_data['approx_error'] = np.sqrt(df_data.approx_error)
 
 method_dict = {
-    'CellSearchMethod.TRIANGLES': 'triangles',
-    'CellSearchMethod.MAX': 'max',
-    'CellSearchMethod.GROUND_TRUTH': 'true_cells',
-    'CellSearchMethod.CLUSTER': 'similarity'
+    'CellCandidateHeuristic.TRIANGLES': 'triangles',
+    'CellCandidateHeuristic.MAX': 'max',
+    'CellCandidateHeuristic.GROUND_TRUTH': 'true_cells',
+    'CellCandidateHeuristic.SIMILARITY': 'similarity'
 }
 
 df_data['method'] = df_data['method'].map(method_dict.get)

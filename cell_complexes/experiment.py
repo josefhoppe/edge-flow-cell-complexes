@@ -13,7 +13,7 @@ from scipy.sparse import csc_array
 
 from cell_flower.cell_complex import CellComplex, calc_edges, normalize_cell
 from .flow_generator import generate_flows_edge_noise, FlowGeneratorCell
-from cell_flower.detection import CellSearchFlowNormalization, FlowPotentialSpanningTree, cell_candidate_search_st, CellSearchMethod, project_flow, score_cells_multiple
+from cell_flower.detection import CellSearchFlowNormalization, FlowPotentialSpanningTree, cell_candidate_search_st, CellCandidateHeuristic, project_flow, score_cells_multiple
 from .generator import CellComplexGenerator, TriangulationComplexGenerator
 
 def one_missing_cells(cell: tuple) -> Set[tuple]:
@@ -31,7 +31,7 @@ default_alg_seeds = (19356077, 165085303, 6015432, 75970932, 91207037, 108074582
                      189625962, 202713794, 172660770, 234964091, 243157323, 230948579, 166182846,
                      5063053, 212910573, 246681574, 162390301, 34053785, 98954684)
 
-# literal to indicate usage of ground truth cells instead of CellSearchMethod
+# literal to indicate usage of ground truth cells instead of CellCandidateHeuristic
 GROUND_TRUTH = "ground_truth"
 
 
@@ -85,7 +85,7 @@ class CellComplexDetectionExperiment:
     __flow_cache: List[np.ndarray]
     __runs: int
     __flow_counts: Iterable[int]
-    __search_method: CellSearchMethod | Literal['ground_truth']
+    __search_method: CellCandidateHeuristic | Literal['ground_truth']
     __n_clusters: int
     __search_flow_norm: CellSearchFlowNormalization
     __num_curls: int
@@ -111,9 +111,9 @@ class CellComplexDetectionExperiment:
         return self.__cell_compl
 
     @property
-    def search_method(self) -> CellSearchMethod:
+    def search_method(self) -> CellCandidateHeuristic:
         """
-        The `CellSearchMethod` used in this experiment
+        The `CellCandidateHeuristic` used in this experiment
         """
         return self.__search_method
 
@@ -277,7 +277,7 @@ class CellComplexDetectionExperiment:
                  runs: int = 20, flow_counts: Iterable[int] = tuple(range(1, 21)),
                  curl_flow_sigma: np.float64 = 1, noise_sigma: np.float64 = .5,
                  flows: List[np.ndarray] | None = None,
-                 search_method: CellSearchMethod | Literal['ground_truth'] = CellSearchMethod.MAX,
+                 search_method: CellCandidateHeuristic | Literal['ground_truth'] = CellCandidateHeuristic.MAX,
                  n_clusters: int = 11,
                  search_flow_norm: CellSearchFlowNormalization = CellSearchFlowNormalization.LEN,
                  num_curls: int | None = None, approx_epsilon: float = np.inf, cells_per_step: int = 5,
@@ -328,7 +328,7 @@ class CellComplexDetectionExperiment:
         """
         if isinstance(rnd, int):
             rnd = np.random.default_rng(seed=self.__alg_seeds[rnd])
-        if self.__search_method == CellSearchMethod.TRIANGLES:
+        if self.__search_method == CellCandidateHeuristic.TRIANGLES:
             cand_list = [(np.sum(np.abs(boundary.T @ harmonic_flows.T)), cell, boundary) for cell, boundary in current_compl.triangles]
             cand_list.sort(key=lambda x: x[0], reverse=True)
             return [(cell, boundary) for _, cell, boundary in cand_list[:self.__cells_per_step]]
@@ -339,8 +339,7 @@ class CellComplexDetectionExperiment:
             cand_list.sort(key=lambda x: x[0], reverse=True)
             return [(cell, boundary) for _, cell, boundary in cand_list[:self.__cells_per_step]]
         else:
-            seed = rnd.integers(4294967295)
-            return cell_candidate_search_st(rnd, current_compl, flows=harmonic_flows, result_count=self.__cells_per_step, method=self.__search_method, flow_norm=self.__search_flow_norm, random_seed=seed, n_clusters=self.__n_clusters)
+            return cell_candidate_search_st(rnd, current_compl, flows=harmonic_flows, result_count=self.__cells_per_step, method=self.__search_method, flow_norm=self.__search_flow_norm, n_clusters=self.__n_clusters)
         
     def get_harmonic_flows(self, current_compl: CellComplex, seed_num: int, flow_count: int) -> np.ndarray:
         """

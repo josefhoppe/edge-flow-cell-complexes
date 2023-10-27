@@ -11,7 +11,7 @@ import time
 import pandas as pd
 from cell_complexes import CellComplexDetectionExperiment
 from cell_complexes.generator import TriangulationComplexGenerator, SmallWorldComplexGenerator
-from cell_flower.detection import CellSearchMethod
+from cell_flower.detection import CellCandidateHeuristic
 import itertools
 from collections import defaultdict
 from snakemake.script import Snakemake

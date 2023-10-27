@@ -8,7 +8,7 @@ import time
 import pandas as pd
 from cell_complexes import CellComplexDetectionExperiment
 from cell_complexes.generator import TriangulationComplexGenerator, SmallWorldComplexGenerator
-from cell_flower.detection import CellSearchMethod
+from cell_flower.detection import CellCandidateHeuristic
 from snakemake.script import Snakemake
 
 def fix_smk() -> Snakemake:

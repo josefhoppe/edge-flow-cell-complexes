@@ -4,7 +4,6 @@ Evaluates the inference accuracy with the given parameters.
 
 from script_utils import method_map
 
-import time
 import pandas as pd
 from cell_complexes import CellComplexDetectionExperiment
 from cell_complexes.generator import TriangulationComplexGenerator, SmallWorldComplexGenerator
