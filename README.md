@@ -4,7 +4,7 @@
 
 <img align="right" width="200" style="margin-top:-5px" src="readme_src/LOGO_ERC-FLAG_FP.png">
 
-[![LoG Conference | OpenReview]((https://img.shields.io/badge/LoG_Conference-OpenReview-5290c0.svg))](https://openreview.net/forum?id=qix189lq5D)
+[![Published at LoG Conference | Paper at OpenReview](https://img.shields.io/badge/LoG_Conference-OpenReview-8c1b13.svg)](https://openreview.net/forum?id=qix189lq5D)
 [![arXiv:2309.01632](https://img.shields.io/badge/arXiv-2309.01632-b31b1b.svg?logo=arxiv)](https://arxiv.org/abs/2309.01632)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/josefhoppe/edge-flow-cell-complexes/blob/main/LICENSE)
 ![uses Conda](https://img.shields.io/badge/Conda-44A833?logo=Anaconda&logoColor=white)
